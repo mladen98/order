@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Katalog</title>
+</head>
+<body>
+<h1>Artikelsuche</h1>
+
+<form th:action="@{/}" method="get">
+    <input type="text" name="q" th:value="${query}" placeholder="Titel, Autor, Beschreibung"/>
+    <button type="submit">Suchen</button>
+</form>
+
+<h2 th:if="${#lists.isEmpty(results) == false}">Resultate</h2>
+<table th:if="${#lists.isEmpty(results) == false}" border="1" cellpadding="6">
+    <thead>
+    <tr><th>ISBN</th><th>Titel</th><th>Autor</th><th>Beschreibung</th><th></th></tr>
+    </thead>
+    <tbody>
+    <!-- Zeilen kommen in AB#144 -->
+    </tbody>
+</table>
+
+<h2>Warenkorb</h2>
+<table border="1" cellpadding="6">
+    <thead><tr><th>Titel</th><th>Menge</th></tr></thead>
+    <tbody>
+    <!-- Warenkorb-Einträge folgen in AB#146/147 -->
+    </tbody>
+</table>
+</body>
+</html>
