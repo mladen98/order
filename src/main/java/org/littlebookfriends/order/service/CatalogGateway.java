@@ -43,4 +43,36 @@ public class CatalogGateway {
             return List.of(); // Kein Fehler -> einfach leere Liste
         }
     }
+
+    public Book findByIsbn(String isbn) {
+        // 1) Versuch: Detail-Endpoint /api/books/{isbn}
+        try {
+            Book one = client.get()
+                    .uri("/api/books/{isbn}", isbn)
+                    .retrieve()
+                    .body(Book.class);
+            if (one != null) return one;
+        } catch (Exception ignored) {
+            // Endpoint existiert (noch) nicht -> weiter mit Fallback
+        }
+
+        // 2) Fallback: Suche nach ISBN und lokal filtern
+        try {
+            Book[] arr = client.get()
+                    .uri(u -> u.path("/api/books").queryParam("query", isbn).build())
+                    .retrieve()
+                    .body(Book[].class);
+
+            if (arr != null) {
+                return Arrays.stream(arr)
+                        .filter(b -> isbn.equals(b.isbn()))
+                        .findFirst()
+                        .orElse(null);
+            }
+        } catch (Exception ignored) {
+            // Katalog-API nicht verfügbar -> null zurückgeben
+        }
+
+        return null;
+    }
 }
