@@ -18,7 +18,13 @@
     <tr><th>ISBN</th><th>Titel</th><th>Autor</th><th>Beschreibung</th><th></th></tr>
     </thead>
     <tbody>
-    <!-- Zeilen kommen in AB#144 -->
+    <tr th:each="b : ${results}">
+        <td th:text="${b.isbn}"></td>
+        <td th:text="${b.title}"></td>
+        <td th:text="${#strings.listJoin(b.authors, ', ')}"></td>
+        <td th:text="${b.description}"></td>
+        <td><!-- Warenkorb-Button folgt in AB#147 --></td>
+    </tr>
     </tbody>
 </table>
 
