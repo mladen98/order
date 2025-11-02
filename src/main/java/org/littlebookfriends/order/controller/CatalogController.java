@@ -2,6 +2,7 @@ package org.littlebookfriends.order.controller;
 
 import org.littlebookfriends.order.model.Book;
 import org.littlebookfriends.order.service.CatalogGateway;
+import org.littlebookfriends.order.service.ShoppingCartService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,9 +14,11 @@ import java.util.List;
 public class CatalogController {
 
     private final CatalogGateway catalog;
+    private final ShoppingCartService cart;
 
-    public CatalogController(CatalogGateway catalog) {
+    public CatalogController(CatalogGateway catalog, ShoppingCartService cart) {
         this.catalog = catalog;
+        this.cart = cart;
     }
 
     @GetMapping("/")
@@ -23,7 +26,8 @@ public class CatalogController {
         List<Book> results = q.isBlank() ? List.of() : catalog.search(q);
         model.addAttribute("query", q);
         model.addAttribute("results", results);
-        model.addAttribute("cart", List.of());
+        model.addAttribute("cart", cart.getItems());
+        model.addAttribute("cartCount", cart.getTotalQuantity());
         return "catalog";
     }
 }
