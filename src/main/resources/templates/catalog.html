@@ -28,11 +28,22 @@
     </tbody>
 </table>
 
-<h2>Warenkorb</h2>
+<h2>Warenkorb <span th:text="'(' + ${cartCount} + ' Artikel)'"></span></h2>
 <table border="1" cellpadding="6">
-    <thead><tr><th>Titel</th><th>Menge</th></tr></thead>
+    <thead>
+    <tr><th>Titel</th><th>Menge</th></tr>
+    </thead>
     <tbody>
-    <!-- Warenkorb-Einträge folgen in AB#146/147 -->
+    <!-- Wenn der Warenkorb leer ist -->
+    <tr th:if="${#lists.isEmpty(cart)}">
+        <td colspan="2">Noch keine Artikel im Warenkorb</td>
+    </tr>
+
+    <!-- Wenn Artikel drin sind -->
+    <tr th:each="ci : ${cart}">
+        <td th:text="${ci.book.title}"></td>
+        <td th:text="${ci.qty}"></td>
+    </tr>
     </tbody>
 </table>
 </body>
