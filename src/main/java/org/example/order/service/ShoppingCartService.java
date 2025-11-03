@@ -1,6 +1,6 @@
-package org.littlebookfriends.order.service;
+package org.example.order.service;
 
-import org.littlebookfriends.order.model.*;
+import org.example.order.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
