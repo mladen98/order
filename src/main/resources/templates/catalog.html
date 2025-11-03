@@ -3,16 +3,32 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Katalog</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+
 </head>
 <body>
 <h1>Artikelsuche</h1>
 
 <form th:action="@{/}" method="get">
-    <input type="text" name="q" th:value="${query}" placeholder="Titel, Autor, Beschreibung"/>
+    <input type="text" name="keyword" th:value="${keyword}" placeholder="Titel, Autor, Beschreibung"/>
     <button type="submit">Suchen</button>
+    <button type="button" onclick="clearSearch()">✖</button>
 </form>
 
-<h2 th:if="${#lists.isEmpty(results) == false}">Resultate</h2>
+<script>
+    function clearSearch() {
+        // Das Eingabefeld finden
+        const input = document.querySelector('input[name="keyword"]');
+        // Inhalt löschen
+        input.value = '';
+        // Formular absenden oder Seite neu laden
+        window.location.href = '/';
+    }
+</script>
+
+<h2 th:if="${#lists.isEmpty(results) == false}">
+    Resultate (<span th:text="${#lists.size(results)}"></span> Treffer)
+</h2>
 <table th:if="${#lists.isEmpty(results) == false}" border="1" cellpadding="6">
     <thead>
     <tr><th>ISBN</th><th>Titel</th><th>Autor</th><th>Beschreibung</th><th></th></tr>
@@ -21,7 +37,12 @@
     <tr th:each="b : ${results}">
         <td th:text="${b.isbn}"></td>
         <td th:text="${b.title}"></td>
-        <td th:text="${#strings.listJoin(b.authors, ', ')}"></td>
+        <td>
+  <span th:each="a, stat : ${b.authors}"
+        th:text="${a.name + ' ' + a.surname}"
+        th:append="${!stat.last ? ', ' : ''}">
+  </span>
+        </td>
         <td th:text="${b.description}"></td>
         <td>
             <form th:action="@{/cart/add}" method="post">

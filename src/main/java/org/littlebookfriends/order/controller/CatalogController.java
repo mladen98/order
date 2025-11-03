@@ -24,9 +24,9 @@ public class CatalogController {
     }
 
     @GetMapping("/")
-    public String index(@RequestParam(required = false, defaultValue = "") String q, Model model) {
-        List<Book> results = q.isBlank() ? List.of() : catalog.search(q);
-        model.addAttribute("query", q);
+    public String index(@RequestParam(required = false) String keyword, Model model) {
+        List<Book> results = catalog.search(keyword);
+        model.addAttribute("keyword", keyword);
         model.addAttribute("results", results);
         model.addAttribute("cart", cart.getItems());
         model.addAttribute("cartCount", cart.getTotalQuantity());
@@ -34,17 +34,18 @@ public class CatalogController {
     }
 
     @PostMapping("/cart/add")
-    public String addToCart(@RequestParam("isbn") String isbn, RedirectAttributes redirect) {
+    public String addToCart(@RequestParam String isbn, RedirectAttributes redirect) {
         // 1) Das Buch über den Catalog suchen
-        var book = catalog.findByIsbn(isbn);
+        var book = catalog.search(isbn).getFirst();
         if (book != null) {
             cart.add(book); // 2) In Warenkorb legen
             redirect.addFlashAttribute("msg", "Buch hinzugefügt: " + book.title());
-        } else {
+        }
+        else {
             redirect.addFlashAttribute("msg", "Fehler: Buch nicht gefunden");
         }
 
         // 3) Danach zurück zur Hauptseite
-        return "redirect:/";
+        return "redirect:/"; //redirect:/
     }
 }

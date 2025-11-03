@@ -1,0 +1,93 @@
+/* 🎨 Allgemeines Layout */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9fafb;
+    margin: 40px;
+    color: #333;
+}
+
+h1, h2 {
+    color: #222;
+}
+
+/* 🔍 Suchfeld + Buttons */
+form {
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    padding: 8px 10px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    margin-left: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* ❌ Clear Button */
+button[type="button"] {
+    background-color: #eee;
+    color: #444;
+    font-weight: bold;
+}
+
+button[type="button"]:hover {
+    background-color: #ddd;
+}
+
+/* 📖 Tabellen */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+th {
+    background-color: #f0f2f5;
+    text-align: left;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-top: 1px solid #e2e2e2;
+}
+
+tr:hover {
+    background-color: #fafafa;
+}
+
+/* 🛒 Warenkorb */
+#cartSection {
+    margin-top: 20px;
+}
+
+.msg {
+    background-color: #e6f4ea;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 8px 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: inline-block;
+}
+

@@ -16,63 +16,26 @@ public class CatalogGateway {
         this.client = catalogClient;
     }
 
-    public List<Book> search(String query) {
+    public List<Book> search(String keyword) {
         try {
-            // Versuche /api/books?query=...
             Book[] result = client.get()
-                    .uri(u -> u.path("/api/books").queryParam("query", query).build())
+                    .uri(u -> {
+                        var b = u.path("/books/search");
+                        // Nur queryParam hinzufügen, wenn Keyword vorhanden
+                        if (keyword != null) {
+                            b = b.queryParam("keyword", keyword);
+                        }
+                        return b.build();
+                    })
                     .retrieve()
                     .body(Book[].class);
-
-            // Falls null, versuche /api/books/search
-            if (result == null || result.length == 0) {
-                result = client.get()
-                        .uri(u -> {
-                            var b = u.path("/api/books/search");
-                            for (var word : query.split("\\s+"))
-                                b = b.queryParam("keywords", word);
-                            return b.build();
-                        })
-                        .retrieve()
-                        .body(Book[].class);
-            }
 
             return result == null ? List.of() : Arrays.asList(result);
+
+
         } catch (Exception e) {
             System.out.println("WARN: Catalog service not available or no endpoint found -> returning empty list");
-            return List.of(); // Kein Fehler -> einfach leere Liste
+            return List.of();
         }
-    }
-
-    public Book findByIsbn(String isbn) {
-        // 1) Versuch: Detail-Endpoint /api/books/{isbn}
-        try {
-            Book one = client.get()
-                    .uri("/api/books/{isbn}", isbn)
-                    .retrieve()
-                    .body(Book.class);
-            if (one != null) return one;
-        } catch (Exception ignored) {
-            // Endpoint existiert (noch) nicht -> weiter mit Fallback
-        }
-
-        // 2) Fallback: Suche nach ISBN und lokal filtern
-        try {
-            Book[] arr = client.get()
-                    .uri(u -> u.path("/api/books").queryParam("query", isbn).build())
-                    .retrieve()
-                    .body(Book[].class);
-
-            if (arr != null) {
-                return Arrays.stream(arr)
-                        .filter(b -> isbn.equals(b.isbn()))
-                        .findFirst()
-                        .orElse(null);
-            }
-        } catch (Exception ignored) {
-            // Katalog-API nicht verfügbar -> null zurückgeben
-        }
-
-        return null;
     }
 }
