@@ -41,9 +41,9 @@ public class CatalogController {
             cart.add(book); // 2) In Warenkorb legen
             redirect.addFlashAttribute("msg", "Buch hinzugefügt: " + book.title());
         }
-        /*else {
+        else {
             redirect.addFlashAttribute("msg", "Fehler: Buch nicht gefunden");
-        } */
+        }
 
         // 3) Danach zurück zur Hauptseite
         return "redirect:/"; //redirect:/
