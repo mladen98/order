@@ -1,4 +1,4 @@
-package org.littlebookfriends.order;
+package org.example.order;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

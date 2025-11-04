@@ -1,4 +1,4 @@
-package org.littlebookfriends.order;
+package org.example.order;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

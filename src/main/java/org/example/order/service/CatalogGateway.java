@@ -1,6 +1,6 @@
-package org.littlebookfriends.order.service;
+package org.example.order.service;
 
-import org.littlebookfriends.order.model.Book;
+import org.example.order.model.Book;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 

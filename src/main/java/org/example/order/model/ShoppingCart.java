@@ -1,4 +1,4 @@
-package org.littlebookfriends.order.model;
+package org.example.order.model;
 
 import java.util.*;
 

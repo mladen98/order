@@ -1,8 +1,8 @@
-package org.littlebookfriends.order.controller;
+package org.example.order.controller;
 
-import org.littlebookfriends.order.model.Book;
-import org.littlebookfriends.order.service.CatalogGateway;
-import org.littlebookfriends.order.service.ShoppingCartService;
+import org.example.order.model.Book;
+import org.example.order.service.CatalogGateway;
+import org.example.order.service.ShoppingCartService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
