@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   catalog:
-    image: catalog:0.0.1-SNAPSHOT
+    build: ../catalog        # Dockerfile im catalog-Projekt
     container_name: catalog-service
     ports:
       - "8080:8080"
@@ -10,7 +10,7 @@ services:
       - app-net
 
   order:
-    image: order:0.0.1-SNAPSHOT
+    build: .                 # Dockerfile im aktuellen (order-)Projekt
     container_name: order-service
     ports:
       - "8081:8081"
