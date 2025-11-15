@@ -10,7 +10,7 @@ public class RestClientConfig {
     @Bean
     RestClient catalogClient() {
         return RestClient.builder()
-                .baseUrl("http://localhost:8080") // Buchsuche-Service (Sprint 1)
+                .baseUrl("http://catalog:8080") // Buchsuche-Service (Sprint 1)
                 .build();
     }
 
