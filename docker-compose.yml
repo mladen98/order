@@ -1,6 +1,20 @@
 version: "3.9"
 
 services:
+  postgres:
+    image: postgres:16
+    container_name: catalog-postgres
+    environment:
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: catalog
+      POSTGRES_DB: catalog
+    ports:
+      - "5432:5432"
+    networks:
+      - app-net
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   catalog:
     build: ../catalog        # Dockerfile im catalog-Projekt
     container_name: catalog-service
@@ -8,6 +22,12 @@ services:
       - "8080:8080"
     networks:
       - app-net
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog
+      SPRING_DATASOURCE_USERNAME: catalog
+      SPRING_DATASOURCE_PASSWORD: catalog
 
   order:
     build: .                 # Dockerfile im aktuellen (order-)Projekt
@@ -22,3 +42,6 @@ services:
 networks:
   app-net:
     driver: bridge
+
+volumes:
+  pgdata:
