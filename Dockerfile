@@ -1,3 +1,5 @@
+# Multi-stage Dockerfile for a Java application using Maven and Eclipse Temurin JDK 21
+# First stage: Build the application
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
