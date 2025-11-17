@@ -38,6 +38,8 @@ services:
       - catalog
     networks:
       - app-net
+    environment:
+      CATALOG_BASE_URL: http://catalog:8080
 
 networks:
   app-net:

@@ -81,6 +81,7 @@ public class OrderServiceE2ETest {
         assertTrue(cartHeader.contains("(1 Artikel)"), "Warenkorb sollte 1 Artikel anzeigen");
 
         String cartTable = page.textContent("h2:has-text('Warenkorb') + table");
+        //Todo Hier wäre die Reihenfolge wichtig - gibt es eine andere Möglichkeit noch den Warenkorb teil zu prüfen?
         assertTrue(cartTable.contains("Der Nachbar"), "Warenkorb-Tabelle sollte das Buch 'Der Nachbar' enthalten");
         assertTrue(cartTable.contains("1"), "Warenkorb-Tabelle sollte Menge 1 anzeigen");
     }
