@@ -1,5 +1,5 @@
 version: "3.9"
-
+# Definieren der Dienste: Postgres-Datenbank, Katalog-Service und Bestell-Service
 services:
   postgres:
     image: postgres:16
@@ -14,7 +14,7 @@ services:
       - app-net
     volumes:
       - pgdata:/var/lib/postgresql/data
-
+# Katalog-Service
   catalog:
     build: ../catalog        # Dockerfile im catalog-Projekt
     container_name: catalog-service
@@ -25,10 +25,10 @@ services:
     depends_on:
       - postgres
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog # Docker DNS gibt jedem Service den Servicenamen als Hostname (keine IP-Adressen verwenden)
       SPRING_DATASOURCE_USERNAME: catalog
       SPRING_DATASOURCE_PASSWORD: catalog
-
+# Bestell-Service
   order:
     build: .                 # Dockerfile im aktuellen (order-)Projekt
     container_name: order-service
@@ -38,10 +38,14 @@ services:
       - catalog
     networks:
       - app-net
-
-networks:
+    environment:
+      CATALOG_BASE_URL: http://catalog:8080 #Localhost wäre hier falsch, da es sich um einen anderen Container handelt (immer mit dem Servicenamen ansprechen)
+# Definieren des Netzwerks und Volumes
+networks: # Wie eine Art Mini-Lan damit die Services sich untereinander erreichen können
   app-net:
-    driver: bridge
+    driver: bridge # Standard-Bridge-Netzwerk verwenden, um via Container-Namen zu kommunizieren
 
 volumes:
   pgdata:
+
+# Docker Desktop muss laufen, um die Container zu starten (Kontrolliert alle Container und Images -> Docker Daemon lokal)

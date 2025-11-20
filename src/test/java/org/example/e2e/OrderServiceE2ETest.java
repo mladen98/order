@@ -1,11 +1,9 @@
 package org.example.e2e;
 
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.LoadState;
 import org.junit.jupiter.api.*;
-
 import java.util.List;
-
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class OrderServiceE2ETest {
@@ -48,40 +46,83 @@ public class OrderServiceE2ETest {
 
     @Test
     void testSearchAndAddToCart() throws InterruptedException {
-        // 1️⃣ Seite öffnen
+        // Seite öffnen
         page.navigate("http://localhost:8081/"); // Öffnet den Webshop
-        // Wartet bis das Suchfeld sichtbar ist (max. 15 Sek)
-        page.waitForSelector("input[name='keyword']", new Page.WaitForSelectorOptions().setTimeout(15000));
 
-        // Suchbegriff eingeben (ES)
-        page.fill("input[name='keyword']", "fiTzek,FrAu");
+        // Suchbegriff eingeben / Locatorobjekt wartet automatisch bis page geladen ist
+        Locator searchInput = page.getByTestId("search-input");
+        assertThat(searchInput).isVisible();
+        searchInput.fill("fiTzek,FrAu");
 
         // Auf 'Suchen' klicken
-        page.click("button:has-text('Suchen')");
-        page.waitForLoadState(LoadState.NETWORKIDLE); // Wartet bis keine weiteren Netzanfragen mehr laufen z.B.
-        // Antwort von LocalHost:8080, Renderung von Thymeleaf, HTML, CSS wird fertig geladen
-        Thread.sleep(1000); // kleine Wartezeit nach Reload
+        Locator searchButton = page.getByTestId("search-button");
+        assertThat(searchButton).isVisible();
+        searchButton.click();
 
         // Überprüfen, ob die Bücher (2) von Sebastian Fitzek angezeigt werden
-        String htmlAfterSearch = page.content(); // HTML-Seite wird in String umgewandelt
-        assertTrue(htmlAfterSearch.contains("Der Nachbar"), "1. Buchtitel sollte angezeigt werden");
-        assertTrue(htmlAfterSearch.contains("Sebastian Fitzek"), "Autor sollte sichtbar sein");
-        assertTrue(htmlAfterSearch.contains("Frau leidet an Monophobie, Nachbar verfolgt sie"), "1. Beschreibung sollte sichtbar sein");
+        Locator resultTable = page.getByTestId("results-table");
+        assertThat(resultTable).isVisible();
 
-        assertTrue(htmlAfterSearch.contains("Mimik"), "2. Buchtitel sollte angezeigt werden");
-        assertTrue(htmlAfterSearch.contains("Frau leidet an Gedächtnisverlust und versucht den Mord an Paul zu verhindern"), "2. Beschreibung sollte sichtbar sein");
+        Locator rows = resultTable.locator("tbody tr");
 
-        // „Zum Warenkorb“ klicken
-        page.click("button:has-text('Zum Warenkorb')"); // Auf Button "Zum Warenkorb" klicken
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        Thread.sleep(1000); // kurze Pause nach Post
+        int rowCount = rows.count();
+        assertTrue(rowCount >=2); // Es sollten mindestens 2 Bücher sein
 
-        // Überprüfen, ob Warenkorb das Buch enthält
-        String cartHeader = page.textContent("h2:has-text('Warenkorb')");
-        assertTrue(cartHeader.contains("(1 Artikel)"), "Warenkorb sollte 1 Artikel anzeigen");
+        // Testen, ob 2 bestimmte Bücher von Sebastian Fitzek vorhanden sind (Voraussetzung: Diese Bücher sind drin)
+        boolean containsNachbar = false;
+        boolean containsMimik = false;
 
-        String cartTable = page.textContent("h2:has-text('Warenkorb') + table");
-        assertTrue(cartTable.contains("Der Nachbar"), "Warenkorb-Tabelle sollte das Buch 'Der Nachbar' enthalten");
-        assertTrue(cartTable.contains("1"), "Warenkorb-Tabelle sollte Menge 1 anzeigen");
+        for (int i = 0; i < rows.count(); i++) {
+            Locator row = rows.nth(i);
+
+            String title = row.locator("td:nth-of-type(2)").textContent().trim();
+            String author = row.locator("td:nth-of-type(3)").textContent().trim();
+            String description = row.locator("td:nth-of-type(4)").textContent().trim();
+
+            if (title.equals("Der Nachbar")) {
+                containsNachbar = true;
+                assertTrue(author.contains("Sebastian Fitzek"));
+                assertTrue(description.contains("Monophobie"));
+            }
+
+            if (title.equals("Mimik")) {
+                containsMimik = true;
+                assertTrue(description.contains("Gedächtnisverlust"));
+            }
+        }
+
+        assertTrue(containsNachbar, "'Der Nachbar' sollte gefunden werden");
+        assertTrue(containsMimik, "'Mimik' sollte gefunden werden");
+
+
+        // „Zum Warenkorb“ für genau jene Tabellenzeile klicken, in der das Buch „Der Nachbar“ steht.
+        // Dadurch ist der Test nicht mehr von der Reihenfolge der Suchergebnisse abhängig.
+        for (int i = 0; i < rows.count(); i++) {
+            Locator row = rows.nth(i);
+
+            String title = row.locator("td:nth-of-type(2)").textContent().trim();
+
+            if (title.equals("Der Nachbar")) {
+                // In genau dieser Row den richtigen Button finden
+                Locator buttonInRow = row.getByTestId("zumWarenkorb-button");
+                buttonInRow.click();
+                break;
+            }
+        }
+
+        // Überprüfen, ob der Warenkorb das Buch enthält
+        assertThat(page.getByTestId("warenkorb-header")).containsText("1 Artikel");
+
+        Locator cartTable = page.getByTestId("cart-table");
+        assertThat(cartTable).isVisible();
+
+        Locator rowsWarenkorb = page.getByTestId("cart-row");
+        assertEquals(1, rowsWarenkorb.count()); // sollte 1 Artikel haben
+
+        Locator firstRow = rowsWarenkorb.nth(0);
+        assertThat(firstRow.getByTestId("cart-row-title")).containsText("Der Nachbar");
+
+        assertThat(firstRow.getByTestId("cart-row-qty")).containsText("1");
+
     }
 }

@@ -10,9 +10,9 @@
 <h1>Artikelsuche</h1>
 
 <form th:action="@{/}" method="get">
-    <input type="text" name="keyword" th:value="${keyword}" placeholder="Titel, Autor, Beschreibung"/>
-    <button type="submit">Suchen</button>
-    <button type="button" onclick="clearSearch()">✖</button>
+    <input type="text" name="keyword" data-testid="search-input" th:value="${keyword}" placeholder="Titel, Autor, Beschreibung"/>
+    <button type="submit" data-testid="search-button">Suchen</button>
+    <button type="button" data-testid="clear-search" onclick="clearSearch()">✖</button>
 </form>
 
 <script>
@@ -27,27 +27,27 @@
 </script>
 
 <h2 th:if="${#lists.isEmpty(results) == false}">
-    Resultate (<span th:text="${#lists.size(results)}"></span> Treffer)
+    Resultate (<span th:text="${#lists.size(results)}" data-testid="table-header"></span> Treffer)
 </h2>
-<table th:if="${#lists.isEmpty(results) == false}" border="1" cellpadding="6">
+<table th:if="${#lists.isEmpty(results) == false}" border="1" cellpadding="6" data-testid="results-table">
     <thead>
-    <tr><th>ISBN</th><th>Titel</th><th>Autor</th><th>Beschreibung</th><th></th></tr>
+    <tr data-testid="table-columns"><th>ISBN</th><th>Titel</th><th>Autor</th><th>Beschreibung</th><th></th></tr>
     </thead>
-    <tbody>
-    <tr th:each="b : ${results}">
-        <td th:text="${b.isbn}"></td>
-        <td th:text="${b.title}"></td>
+    <tbody data-testid="table-body">
+    <tr th:each="b : ${results}" data-testid="results-row">
+        <td th:text="${b.isbn}" data-testid="book-isbn"></td>
+        <td th:text="${b.title}" data-testid="book-title"></td>
         <td>
   <span th:each="a, stat : ${b.authors}"
         th:text="${a.name + ' ' + a.surname}"
-        th:append="${!stat.last ? ', ' : ''}">
+        th:append="${!stat.last ? ', ' : ''}" data-testid="book-author">
   </span>
         </td>
-        <td th:text="${b.description}"></td>
+        <td th:text="${b.description}" data-testid="book-description"></td>
         <td>
             <form th:action="@{/cart/add}" method="post">
-                <input type="hidden" name="isbn" th:value="${b.isbn}"/>
-                <button type="submit">Zum Warenkorb</button>
+                <input type="hidden" name="isbn" th:value="${b.isbn}"/> <!-- Verstecktes Feld für ISBN, als Keyword mitgeben -->
+                <button type="submit" data-testid="zumWarenkorb-button">Zum Warenkorb</button>
             </form>
         </td>
 
@@ -55,21 +55,21 @@
     </tbody>
 </table>
 
-<h2>Warenkorb <span th:text="'(' + ${cartCount} + ' Artikel)'"></span></h2>
-<table border="1" cellpadding="6">
-    <thead>
+<h2>Warenkorb <span th:text="'(' + ${cartCount} + ' Artikel)'" data-testid="warenkorb-header"></span></h2>
+<table border="1" cellpadding="6" data-testid="cart-table">
+    <thead data-testid="cart-table-head">
     <tr><th>Titel</th><th>Menge</th></tr>
     </thead>
-    <tbody>
+    <tbody data-testid="cart-table-body">
     <!-- Wenn der Warenkorb leer ist -->
     <tr th:if="${#lists.isEmpty(cart)}">
         <td colspan="2">Noch keine Artikel im Warenkorb</td>
     </tr>
 
     <!-- Wenn Artikel drin sind -->
-    <tr th:each="ci : ${cart}">
-        <td th:text="${ci.book.title}"></td>
-        <td th:text="${ci.qty}"></td>
+    <tr th:each="ci : ${cart}" data-testid="cart-row">
+        <td th:text="${ci.book.title}" data-testid="cart-row-title"></td>
+        <td th:text="${ci.qty}" data-testid="cart-row-qty"></td>
     </tr>
     </tbody>
 </table>
