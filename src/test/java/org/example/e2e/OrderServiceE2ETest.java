@@ -61,6 +61,7 @@ public class OrderServiceE2ETest {
 
         // Überprüfen, ob die Bücher (2) von Sebastian Fitzek angezeigt werden
         Locator resultTable = page.getByTestId("results-table");
+        resultTable.waitFor(new Locator.WaitForOptions().setTimeout(10000));
         assertThat(resultTable).isVisible();
 
         Locator rows = resultTable.locator("tbody tr");
