@@ -22,6 +22,20 @@ jobs:
       - name: Install Playwright Browsers
         uses: microsoft/playwright-github-action@v1
 
+      - name: Build jar
+        run: mvn -DskipTests package
+
+      - name: Start backend service
+        run: |
+          nohup java -jar target/order-0.0.1-SNAPSHOT.jar &
+          sleep 10
+
+      - name: Health check backend
+        run: |
+          until curl -s http://localhost:8081; do
+            echo "Waiting for backend..."
+            sleep 2
+          done
       - name: Build & Test (incl. Jacoco)
         run: mvn --batch-mode --update-snapshots verify
 
