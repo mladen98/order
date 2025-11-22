@@ -18,9 +18,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 2.5 Playwright Browser installieren
+      # Install Playwright + deps
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        uses: microsoft/playwright-github-action@v1
 
       - name: Build & Test (incl. Jacoco)
         run: mvn --batch-mode --update-snapshots verify
@@ -36,6 +36,13 @@ jobs:
 
       - name: Push Image to Docker Hub
         run: docker push mladen98/order:latest
+
+      - name: Upload Surefire Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
 
       - name: Upload Jacoco Coverage Report
         uses: actions/upload-artifact@v4

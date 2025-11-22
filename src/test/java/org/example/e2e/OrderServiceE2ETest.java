@@ -18,7 +18,7 @@ public class OrderServiceE2ETest {
         playwright = Playwright.create(); // der interne Controller wird gestartet
         browser = playwright.chromium().launch( // öffnet den Chromium-Browser (Google Chrome)
                 new BrowserType.LaunchOptions()
-                        .setHeadless(false) // Browser ist sichtbar (man sieht den Testvorgang)
+                        .setHeadless(true) // Browser ist sichtbar (man sieht den Testvorgang)
                         .setSlowMo(2000) // Langsam, damit wir es sehen
                         .setArgs(List.of("--start-maximized")) // Vollbild starten
         );
