@@ -19,7 +19,7 @@ jobs:
           cache: maven
 
       - name: Maven Build + Tests (skip E2E)
-        run: mvn --batch-mode --update-snapshots verify -Dtest=\!OrderServiceE2ETest
+        run: mvn --batch-mode --update-snapshots verify -Dtest=!OrderServiceE2ETest
 
       - name: Build Docker Image
         run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
