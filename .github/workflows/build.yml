@@ -1,0 +1,40 @@
+name: Order CI/CD
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build & Test (incl. Jacoco)
+        run: mvn --batch-mode --update-snapshots verify
+
+      - name: Build Docker Image with Buildpacks
+        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=mladen98/order:latest
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Image to Docker Hub
+        run: docker push mladen98/order:latest
+
+      - name: Upload Jacoco Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: order-coverage
+          path: target/site/jacoco
