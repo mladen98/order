@@ -18,52 +18,53 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Install Playwright & deps
+      # Install Playwright & system dependencies
       - name: Install Playwright Browsers
         run: |
           npx playwright install --with-deps
 
-      # Docker Compose Stack starten (Catalog + Order + Postgres)
-      - name: Start microservices stack
-        run: |
-          docker compose -f docker-compose.yml up -d
-          sleep 25
-
-      # Health Checks
-      - name: Check Order API
-        run: |
-          until curl -s http://localhost:8081/; do
-            echo "Waiting for order-service..."
-            sleep 2
-          done
-
-      - name: Check Catalog API
-        run: |
-          until curl -s http://localhost:8080/; do
-            echo "Waiting for catalog-service..."
-            sleep 2
-          done
-
-      # Unit + E2E Tests
-      - name: Build & Test (incl. Jacoco)
-        run: mvn --batch-mode --update-snapshots verify
-
-      # Docker Image bauen
-      - name: Build Docker Image with Buildpacks
-        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=mladen98/order:latest
-
-      # Docker Login
+      # Docker login BEFORE compose (wichtig, sonst kann compose Images nicht ziehen!)
       - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Push
-      - name: Push Image
-        run: docker push mladen98/order:latest
+      # Start complete microservice stack using Docker Hub images
+      - name: Start microservices stack
+        run: |
+          docker compose -f docker-compose.yml up -d
+          sleep 20
 
-      # Reports
+      # Health check for Catalog
+      - name: Check Catalog API
+        run: |
+          until curl -s http://localhost:8080; do
+            echo "Waiting for catalog-service..."
+            sleep 2
+          done
+
+      # Health check for Order
+      - name: Check Order API
+        run: |
+          until curl -s http://localhost:8081; do
+            echo "Waiting for order-service..."
+            sleep 2
+          done
+
+      # Unit + E2E Tests (Playwright)
+      - name: Build & Test (incl. Jacoco)
+        run: mvn --batch-mode --update-snapshots verify
+
+      # Build Docker Image for Order-Service
+      - name: Build Docker Image with Buildpacks
+        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
+
+      # Push Order Image
+      - name: Push Image
+        run: docker push ksrigganthan/order:latest
+
+      # Surefire Reports
       - name: Upload Surefire Reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -71,6 +72,7 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports
 
+      # Jacoco Coverage Upload
       - name: Upload Jacoco Coverage
         uses: actions/upload-artifact@v4
         with:
