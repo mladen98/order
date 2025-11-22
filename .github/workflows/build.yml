@@ -18,25 +18,32 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Install Playwright & system dependencies
-      - name: Install Playwright Browsers
-        run: |
-          npx playwright install --with-deps
+      # 1) Build Order Image BEFORE compose
+      - name: Build Docker Image with Buildpacks
+        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
 
-      # Docker login BEFORE compose (wichtig, sonst kann compose Images nicht ziehen!)
+      # 2) Login + Push
       - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Start complete microservice stack using Docker Hub images
+      - name: Push Order Image
+        run: docker push ksrigganthan/order:latest
+
+      # 3) Install Playwright
+      - name: Install Playwright Browsers
+        run: |
+          npx playwright install --with-deps
+
+      # 4) Start microservices stack
       - name: Start microservices stack
         run: |
           docker compose -f docker-compose.yml up -d
           sleep 20
 
-      # Health check for Catalog
+      # 5) Health Checks
       - name: Check Catalog API
         run: |
           until curl -s http://localhost:8080; do
@@ -44,7 +51,6 @@ jobs:
             sleep 2
           done
 
-      # Health check for Order
       - name: Check Order API
         run: |
           until curl -s http://localhost:8081; do
@@ -52,19 +58,11 @@ jobs:
             sleep 2
           done
 
-      # Unit + E2E Tests (Playwright)
+      # 6) Tests
       - name: Build & Test (incl. Jacoco)
         run: mvn --batch-mode --update-snapshots verify
 
-      # Build Docker Image for Order-Service
-      - name: Build Docker Image with Buildpacks
-        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
-
-      # Push Order Image
-      - name: Push Image
-        run: docker push ksrigganthan/order:latest
-
-      # Surefire Reports
+      # 7) Reports
       - name: Upload Surefire Reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -72,7 +70,6 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports
 
-      # Jacoco Coverage Upload
       - name: Upload Jacoco Coverage
         uses: actions/upload-artifact@v4
         with:
