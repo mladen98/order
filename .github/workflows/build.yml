@@ -18,32 +18,51 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 1) Build Order Image BEFORE compose
+      # ---------------------------
+      # 1) Build JAR (sehr wichtig!)
+      # ---------------------------
+      - name: Package Order JAR
+        run: mvn -DskipTests package
+
+      # ---------------------------
+      # 2) Build Order Docker Image
+      # ---------------------------
       - name: Build Docker Image with Buildpacks
         run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
 
-      # 2) Login + Push
+      # ---------------------------
+      # 3) Docker Login
+      # ---------------------------
       - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # ---------------------------
+      # 4) Push Order Image
+      # ---------------------------
       - name: Push Order Image
         run: docker push ksrigganthan/order:latest
 
-      # 3) Install Playwright
+      # ---------------------------
+      # 5) Install Playwright
+      # ---------------------------
       - name: Install Playwright Browsers
         run: |
           npx playwright install --with-deps
 
-      # 4) Start microservices stack
+      # ---------------------------
+      # 6) Start Microservices Stack
+      # ---------------------------
       - name: Start microservices stack
         run: |
           docker compose -f docker-compose.yml up -d
           sleep 20
 
-      # 5) Health Checks
+      # ---------------------------
+      # 7) Health Checks
+      # ---------------------------
       - name: Check Catalog API
         run: |
           until curl -s http://localhost:8080; do
@@ -58,11 +77,15 @@ jobs:
             sleep 2
           done
 
-      # 6) Tests
+      # ---------------------------
+      # 8) Run E2E + Unit Tests
+      # ---------------------------
       - name: Build & Test (incl. Jacoco)
         run: mvn --batch-mode --update-snapshots verify
 
-      # 7) Reports
+      # ---------------------------
+      # 9) Upload Reports
+      # ---------------------------
       - name: Upload Surefire Reports
         if: failure()
         uses: actions/upload-artifact@v4
