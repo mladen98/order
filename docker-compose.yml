@@ -14,9 +14,10 @@ services:
       - app-net
     volumes:
       - pgdata:/var/lib/postgresql/data
+
 # Katalog-Service
   catalog:
-    build: ../catalog        # Dockerfile im catalog-Projekt
+    image: ksrigganthan/catalog:latest # Dockerfile im catalog-Projekt
     container_name: catalog-service
     ports:
       - "8080:8080"
@@ -28,9 +29,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog # Docker DNS gibt jedem Service den Servicenamen als Hostname (keine IP-Adressen verwenden)
       SPRING_DATASOURCE_USERNAME: catalog
       SPRING_DATASOURCE_PASSWORD: catalog
+
 # Bestell-Service
   order:
-    build: .                 # Dockerfile im aktuellen (order-)Projekt
+    image: ksrigganthan/order:latest             # Dockerfile im aktuellen (order-)Projekt
     container_name: order-service
     ports:
       - "8081:8081"
