@@ -8,6 +8,11 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    services:
+      docker:
+        image: docker:24.0.5-dind
+        privileged: true
+
     steps:
       - uses: actions/checkout@v5
 
@@ -18,48 +23,49 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Install Playwright + required system deps
+      # Install Playwright & deps
       - name: Install Playwright Browsers
-        uses: microsoft/playwright-github-action@v1
-
-      # Build Spring Boot jar without running tests
-      - name: Build jar
-        run: mvn -DskipTests package
-
-      # Start backend server for E2E tests
-      - name: Start backend service
         run: |
-          nohup java -jar target/order-0.0.1-SNAPSHOT.jar &
-          sleep 10
+          npx playwright install --with-deps
 
-      # Wait for backend to be reachable on port 8081
-      - name: Health check backend
+      # 🟩 DAS ist der Schlüssel: docker-compose starten!
+      - name: Start microservices stack
         run: |
-          until curl -s http://localhost:8081; do
-            echo "Waiting for backend..."
+          docker compose -f docker-compose.yml up -d
+          sleep 25  # Warten bis Postgres, Catalog und Order wirklich laufen
+
+      # Optional: Health Checks
+      - name: Check Order API
+        run: |
+          until curl -s http://localhost:8081/; do
+            echo "Waiting for order-service..."
             sleep 2
           done
 
-      # Run ALL tests (incl. E2E with Playwright)
+      - name: Check Catalog API
+        run: |
+          until curl -s http://localhost:8080/; do
+            echo "Waiting for catalog-service..."
+            sleep 2
+          done
+
+      # Jetzt E2E + Backend-Tests
       - name: Build & Test (incl. Jacoco)
         run: mvn --batch-mode --update-snapshots verify
 
-      # Build OCI image with Spring Buildpacks
+      # Build Docker Image
       - name: Build Docker Image with Buildpacks
         run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=mladen98/order:latest
 
-      # Authenticate with Docker Hub
       - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Push image
-      - name: Push Image to Docker Hub
+      - name: Push Image
         run: docker push mladen98/order:latest
 
-      # Upload Surefire reports if tests fail
       - name: Upload Surefire Reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -67,8 +73,7 @@ jobs:
           name: surefire-reports
           path: target/surefire-reports
 
-      # Upload Jacoco Coverage
-      - name: Upload Jacoco Coverage Report
+      - name: Upload Jacoco Coverage
         uses: actions/upload-artifact@v4
         with:
           name: order-coverage
