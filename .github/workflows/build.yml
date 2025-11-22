@@ -18,74 +18,48 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # ---------------------------
-      # 1) Build JAR (sehr wichtig!)
-      # ---------------------------
-      - name: Package Order JAR
+      # 1) Build Order JAR
+      - name: Package JAR
         run: mvn -DskipTests package
 
-      # ---------------------------
-      # 2) Build Order Docker Image
-      # ---------------------------
-      - name: Build Docker Image with Buildpacks
-        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
+      # 2) Start Order backend on port 8081
+      - name: Start backend
+        run: |
+          nohup java -jar target/*-SNAPSHOT.jar --server.port=8081 > backend.log 2>&1 &
+          echo "Backend starting..."
+          sleep 10
 
-      # ---------------------------
-      # 3) Docker Login
-      # ---------------------------
-      - name: Docker Login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # 3) Wait for backend readiness
+      - name: Wait for backend on 8081
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8081/ >/dev/null; then
+              echo "Backend is UP"
+              exit 0
+            fi
+            echo "Waiting for backend..."
+            sleep 2
+          done
+          echo "Backend did NOT start!"
+          exit 1
 
-      # ---------------------------
-      # 4) Push Order Image
-      # ---------------------------
-      - name: Push Order Image
-        run: docker push ksrigganthan/order:latest
-
-      # ---------------------------
-      # 5) Install Playwright
-      # ---------------------------
+      # 4) Install Playwright
       - name: Install Playwright Browsers
         run: |
           npx playwright install --with-deps
 
-      # ---------------------------
-      # 6) Start Microservices Stack
-      # ---------------------------
-      - name: Start microservices stack
-        run: |
-          docker compose -f docker-compose.yml up -d
-          sleep 20
-
-      # ---------------------------
-      # 7) Health Checks
-      # ---------------------------
-      - name: Check Catalog API
-        run: |
-          until curl -s http://localhost:8080; do
-            echo "Waiting for catalog-service..."
-            sleep 2
-          done
-
-      - name: Check Order API
-        run: |
-          until curl -s http://localhost:8081; do
-            echo "Waiting for order-service..."
-            sleep 2
-          done
-
-      # ---------------------------
-      # 8) Run E2E + Unit Tests
-      # ---------------------------
-      - name: Build & Test (incl. Jacoco)
+      # 5) Run E2E + Unit Tests
+      - name: Run Tests (incl. Jacoco)
         run: mvn --batch-mode --update-snapshots verify
 
-      # ---------------------------
-      # 9) Upload Reports
-      # ---------------------------
+      # 6) Upload logs & reports if something fails
+      - name: Upload backend.log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: backend.log
+
       - name: Upload Surefire Reports
         if: failure()
         uses: actions/upload-artifact@v4
