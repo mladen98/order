@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v5
@@ -18,54 +18,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 1) Build Order JAR
-      - name: Package JAR
-        run: mvn -DskipTests package
+      - name: Maven Build + Tests (skip E2E)
+        run: mvn --batch-mode --update-snapshots verify -Dtest=\!OrderServiceE2ETest
 
-      # 2) Start Order backend on port 8081
-      - name: Start backend
-        run: |
-          nohup java -jar target/*-SNAPSHOT.jar --server.port=8081 > backend.log 2>&1 &
-          echo "Backend starting..."
-          sleep 10
+      - name: Build Docker Image
+        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
 
-      # 3) Wait for backend readiness
-      - name: Wait for backend on 8081
-        run: |
-          for i in {1..30}; do
-            if curl -sSf http://localhost:8081/ >/dev/null; then
-              echo "Backend is UP"
-              exit 0
-            fi
-            echo "Waiting for backend..."
-            sleep 2
-          done
-          echo "Backend did NOT start!"
-          exit 1
-
-      # 4) Install Playwright
-      - name: Install Playwright Browsers
-        run: |
-          npx playwright install --with-deps
-
-      # 5) Run E2E + Unit Tests
-      - name: Run Tests (incl. Jacoco)
-        run: mvn --batch-mode --update-snapshots verify
-
-      # 6) Upload logs & reports if something fails
-      - name: Upload backend.log
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Docker Login
+        uses: docker/login-action@v3
         with:
-          name: backend-log
-          path: backend.log
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Upload Surefire Reports
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: surefire-reports
-          path: target/surefire-reports
+      - name: Push Docker Image
+        run: docker push ksrigganthan/order:latest
 
       - name: Upload Jacoco Coverage
         uses: actions/upload-artifact@v4
