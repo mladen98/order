@@ -1,52 +1,61 @@
-name: Order CI/CD
+name: Order CI/CD #Titel für den Workflow
 
-on:
-  push:
-  pull_request:
+on: # Trigger für den Workflow
+  push: # Bei jedem Push ins Repository (egal welcher Branch)
+  pull_request: # Bei jedem Pull Request ins Repository (egal welcher Branch)
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+jobs: # Definition der Jobs (build, test, deploy, etc.)
+  build: # Job läuft auf einem Ubuntu-Linux Runner
+    runs-on: ubuntu-latest #Runner Typ
 
-    steps:
-      - uses: actions/checkout@v5
+    steps: # Schritte des Jobs
+      - uses: actions/checkout@v5 # Code aus dem Repository auschecken
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
+      - name: Set up Java 21 # Einrichtung von Java 21
+        uses: actions/setup-java@v4 #Github Action zum Einrichten von Java
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
 
-      # 1) Skip E2E in the build
-      - name: Maven Build (skip E2E)
-        run: mvn --batch-mode --update-snapshots verify -Dtest=!OrderServiceE2ETest
+      - name: Maven Build (skip E2E) # Maven Build & Test ohne E2E Tests
+        run: mvn --batch-mode --update-snapshots verify -Dtest=!OrderServiceE2ETest # beinhaltet compile, unittests, integration tests, package, verify
+        # OrderServiceE2ETest wird hier übersprungen, da dieser Test die laufenden Microservices benötigt
 
-        # 2) Build latest Order Image
-        # (catalog image must already be in dockerhub)
-      - name: Build Docker Image
-        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
+      - name: Build Docker Image # Build Docker Image mit Buildpacks
+        run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest # Befehl zum Bauen des Docker Images mit Buildpacks
+        # Hier müsste Catalog Image schon lokal vorhanden sein, damit Order Image gebaut werden kann (Abhängigkeit in docker-compose.yml)
 
-      # 3) Login & Push fresh image
-      - name: Docker Login
-        uses: docker/login-action@v3
+      - name: Docker Login # Login in Docker Hub
+        uses: docker/login-action@v3 # Github Action zum Login in Docker Hub
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }} # Docker Hub Username aus GitHub Secrets
+          password: ${{ secrets.DOCKERHUB_TOKEN }} # Docker Hub Token aus GitHub Secrets
 
-      - name: Push Image
-        run: docker push ksrigganthan/order:latest
+      - name: Push Image # Docker Image pushen
+        run: docker push ksrigganthan/order:latest # Image zu Docker Hub pushen
 
-      # 4) Start microservices (compose)
-      - name: Start microservices
-        run: |
-          docker compose -f docker-compose.yml pull
-          docker compose -f docker-compose.yml up -d
-          sleep 25
+      - name: Start microservices # Starten der benötigten Microservices via Docker Compose
+        run: | # Mehrzeiliger Befehl
+          docker compose -f docker-compose.yml pull # Vor dem Starten die Images vom Docker Hub ziehen
+          docker compose -f docker-compose.yml up -d # Microservices im detached Modus starten
+          sleep 25 # Warten, bis die Microservices hochgefahren sind
 
-      # 5) Wait for Catalog
-      - name: Wait for Catalog
-        run: |
+      # Ablauf
+      # 30-mal versuchen, ob der Catalog Microservice erreichbar ist (jeder Versuch -> 2 Sekunden warten, max. 1 Minute warten)
+      # Curl Befehl sendet eine Anfrage an den Microservice und prüft, ob dieser antwortet
+      # -s steht für silent (keine Ausgabe)
+      # -f steht für fail (kein Output bei Fehler, 404/500 etc.)
+      # /dev/null leitet die Ausgabe weg (wir wollen nur prüfen, ob der Dienst erreichbar ist)
+      # echo gibt Statusmeldungen aus
+      # exit 0 bedeutet Erfolg, exit 1 bedeutet Fehler
+      # fi schließt die if-Bedingung ab
+      # echo "Waiting for Catalog..." gibt eine Meldung aus, wenn der Dienst noch nicht erreichbar ist
+      # sleep 2 wartet 2 Sekunden, bevor der nächste Versuch gestartet wird
+      # exit 1 am Ende signalisiert einen Fehler, wenn der Dienst nach 30 Versuchen nicht erreichbar ist
+
+      - name: Wait for Catalog # Warten, bis der Catalog Microservice erreichbar ist
+        run: | 
           for i in {1..30}; do
             if curl -sf http://localhost:8080/books/search > /dev/null; then
               echo "Catalog is up"
@@ -56,9 +65,10 @@ jobs:
             sleep 2
           done
           exit 1
+          
 
-      # 6) Wait for Order
-      - name: Wait for Order
+      # Siehe Erklärung oben
+      - name: Wait for Order # Warten, bis der Catalog Microservice erreichbar ist
         run: |
           for i in {1..30}; do
             if curl -sf http://localhost:8081/ > /dev/null; then
@@ -70,25 +80,24 @@ jobs:
           done
           exit 1
 
-      # 7) Install Playwright browsers
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
 
-      # 8) Run ALL tests including E2E
-      - name: Run Tests (including E2E)
-        run: mvn --batch-mode --update-snapshots test
+      - name: Install Playwright Browsers # Playwright Browser für E2E Tests installieren
+        run: npx playwright install --with-deps # --with-deps installiert zusätzlich benötigte Abhängigkeiten im Linux System
 
-      # 9) Reports
-      - name: Upload Surefire Reports
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Run Tests (including E2E) # Alle Tests inklusive E2E Tests ausführen
+        run: mvn --batch-mode --update-snapshots test # E2E Tests sind jetzt möglich, da die Microservices laufen
+
+
+      - name: Upload Surefire Reports # Upload der Surefire Reports als Artefakt (Testresultate publizieren)
+        if: always() # Immer ausführen, auch wenn vorherige Schritte fehlschlagen
+        uses: actions/upload-artifact@v4 # Github Action zum Upload von Artefakten
         with:
           name: surefire-reports
           path: target/surefire-reports
 
-      - name: Upload Jacoco Coverage
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload Jacoco Coverage # Upload der Jacoco Coverage Reports als Artefakt (Bonus)
+        if: always() # Immer ausführen, auch wenn vorherige Schritte fehlschlagen
+        uses: actions/upload-artifact@v4 # Github Action zum Upload von Artefakten
         with:
           name: order-coverage
           path: target/site/jacoco
