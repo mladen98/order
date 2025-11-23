@@ -48,7 +48,7 @@ jobs:
       - name: Wait for Catalog
         run: |
           for i in {1..30}; do
-            if curl -s http://localhost:8080/ | grep -q "</html>"; then
+            if curl -sf http://localhost:8080/books > /dev/null; then
               echo "Catalog is up"
               exit 0
             fi
@@ -61,7 +61,7 @@ jobs:
       - name: Wait for Order
         run: |
           for i in {1..30}; do
-            if curl -s http://localhost:8081/ | grep -q "</html>"; then
+            if curl -sf http://localhost:8081/orders > /dev/null; then
               echo "Order is up"
               exit 0
             fi

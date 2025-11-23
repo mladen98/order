@@ -1,4 +1,3 @@
-version: "3.9"
 # Definieren der Dienste: Postgres-Datenbank, Katalog-Service und Bestell-Service
 services:
   postgres:
