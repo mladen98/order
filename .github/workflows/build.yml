@@ -18,21 +18,67 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Maven Build + Tests (skip E2E)
-        run: mvn --batch-mode --update-snapshots verify -DexcludeTests=OrderServiceE2ETest
+      # 1) Skip E2E in the build
+      - name: Maven Build (skip E2E)
+        run: mvn --batch-mode --update-snapshots verify -Dtest=!OrderServiceE2ETest
 
+        # 2) Build latest Order Image
+        # (catalog image must already be in dockerhub)
       - name: Build Docker Image
         run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=ksrigganthan/order:latest
 
+      # 3) Login & Push fresh image
       - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Push Docker Image
+      - name: Push Image
         run: docker push ksrigganthan/order:latest
 
+      # 4) Start microservices (compose)
+      - name: Start microservices
+        run: |
+          docker compose -f docker-compose.yml pull
+          docker compose -f docker-compose.yml up -d
+          sleep 25
+
+      # 5) Wait for Catalog
+      - name: Wait for Catalog
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/ | grep -q "</html>"; then
+              echo "Catalog is up"
+              exit 0
+            fi
+            echo "Waiting for Catalog..."
+            sleep 2
+          done
+          exit 1
+
+      # 6) Wait for Order
+      - name: Wait for Order
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8081/ | grep -q "</html>"; then
+              echo "Order is up"
+              exit 0
+            fi
+            echo "Waiting for Order..."
+            sleep 2
+          done
+          exit 1
+
+      # 7) Install Playwright browsers
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # 8) Run ALL tests including E2E
+      - name: Run Tests (including E2E)
+        run: mvn --batch-mode --update-snapshots test
+
+      # 9) Reports
       - name: Upload Surefire Reports
         if: always()
         uses: actions/upload-artifact@v4
