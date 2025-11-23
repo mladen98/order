@@ -61,7 +61,7 @@ jobs:
       - name: Wait for Order
         run: |
           for i in {1..30}; do
-            if curl -sf http://localhost:8081/orders > /dev/null; then
+            if curl -sf http://localhost:8081/ > /dev/null; then
               echo "Order is up"
               exit 0
             fi
