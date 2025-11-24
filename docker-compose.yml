@@ -16,7 +16,7 @@ services:
 
 # Katalog-Service
   catalog:
-    image: ksrigganthan/catalog:latest # Dockerfile im catalog-Projekt
+    image: ksrigganthan/catalog:latest # Dockerfile Catalog vom Docker Hub holen
     container_name: catalog-service
     ports:
       - "8080:8080"
@@ -31,7 +31,7 @@ services:
 
 # Bestell-Service
   order:
-    image: ksrigganthan/order:latest             # Dockerfile im aktuellen (order-)Projekt
+    image: ksrigganthan/order:latest    # Dockerfile im aktuellen (order-)Projekt
     container_name: order-service
     ports:
       - "8081:8081"
