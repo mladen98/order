@@ -16,7 +16,14 @@ jobs: # Definition der Jobs (build, test, deploy, etc.)
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
+
+      - name: Cache Maven Repository # Maven Repository cachen (Bonus)
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Maven Build (skip E2E) # Maven Build & Test ohne E2E Tests
         run: mvn --batch-mode --update-snapshots verify -Dtest=!OrderServiceE2ETest # beinhaltet compile, unittests, integration tests, package, verify
