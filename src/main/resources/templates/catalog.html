@@ -9,6 +9,11 @@
 <body>
 <h1>Artikelsuche</h1>
 
+<div th:if="${catalogUnavailable}" class="msg error" data-testid="catalog-error">
+    Der Katalog-Service ist momentan nicht erreichbar. Es werden keine Suchergebnisse angezeigt.
+</div>
+
+
 <form th:action="@{/}" method="get">
     <input type="text" name="keyword" data-testid="search-input" th:value="${keyword}" placeholder="Titel, Autor, Beschreibung"/>
     <button type="submit" data-testid="search-button">Suchen</button>

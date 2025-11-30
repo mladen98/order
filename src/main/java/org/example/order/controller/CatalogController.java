@@ -1,5 +1,6 @@
 package org.example.order.controller;
 
+import org.example.order.model.Author;
 import org.example.order.model.Book;
 import org.example.order.service.CatalogGateway;
 import org.example.order.service.ShoppingCartService;
@@ -26,10 +27,15 @@ public class CatalogController {
     @GetMapping("/")
     public String index(@RequestParam(required = false) String keyword, Model model) {
         List<Book> results = catalog.search(keyword);
+
         model.addAttribute("keyword", keyword);
         model.addAttribute("results", results);
         model.addAttribute("cart", cart.getItems());
         model.addAttribute("cartCount", cart.getTotalQuantity());
+
+        // Info für das UI
+        model.addAttribute("catalogUnavailable", !catalog.isCatalogAvailable());
+
         return "catalog";
     }
 
