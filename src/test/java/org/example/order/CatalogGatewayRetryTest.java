@@ -21,9 +21,12 @@ class CatalogGatewayRetryTest {
     @Test
     void whenCatalogIsDown_fallbackReturnsEmptyList() {
         // Act: Wir rufen die Suche auf, obwohl der Catalog (Port 9999) nicht läuft
-        List<Book> result = catalogGateway.search("irgendwas");
+        List<Book> result = catalogGateway.search("harry"); // Macht Sinn einen richtigen möglichen Suchwort zu benutzen
 
         // Assert: Kein Fehler, sondern eine leere Liste -> Fallback wurde benutzt
         assertThat(result).isEmpty();
+
+        assertThat(catalogGateway.isCatalogAvailable()).isFalse();
+
     }
 }
