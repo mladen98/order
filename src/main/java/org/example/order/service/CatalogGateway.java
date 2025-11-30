@@ -1,8 +1,10 @@
 package org.example.order.service;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import org.example.order.model.Book;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,26 +18,30 @@ public class CatalogGateway {
         this.client = catalogClient;
     }
 
+    // Diese Methode ruft den Catalog-Service auf.
+    // Resilience4j überwacht sie und versucht es bei Fehlern automatisch erneut.
+    @Retry(name = "catalogSearch", fallbackMethod = "fallbackSearch")
     public List<Book> search(String keyword) {
-        try {
-            Book[] result = client.get()
-                    .uri(u -> {
-                        var b = u.path("/books/search");
-                        // Nur queryParam hinzufügen, wenn Keyword vorhanden
-                        if (keyword != null) {
-                            b = b.queryParam("keyword", keyword);
-                        }
-                        return b.build();
-                    })
-                    .retrieve()
-                    .body(Book[].class);
+        Book[] result = client.get()
+                .uri(u -> {
+                    var b = u.path("/books/search");
+                    // Nur queryParam hinzufügen, wenn Keyword vorhanden
+                    if (keyword != null) {
+                        b = b.queryParam("keyword", keyword);
+                    }
+                    return b.build();
+                })
+                .retrieve()
+                .body(Book[].class);
 
-            return result == null ? List.of() : Arrays.asList(result);
-
-
-        } catch (Exception e) {
-            System.out.println("WARN: Catalog service not available or no endpoint found -> returning empty list");
-            return List.of();
-        }
+        return result == null ? List.of() : Arrays.asList(result);
     }
+
+    // Fallback: wird aufgerufen, wenn alle Versuche scheitern
+    public List<Book> fallbackSearch(String keyword, Throwable ex) {
+        System.out.println("WARN: Catalog service DOWN – Fallback aktiv. Grund: " + ex.getMessage());
+        return List.of();
+    }
+
+
 }
