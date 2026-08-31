@@ -156,10 +156,10 @@ Die Coverage wird über **JaCoCo** erhoben.
   einem Neustart oder Sessionende verloren; `clear()` existiert im Service, ist
   aber nicht über die Oberfläche erreichbar. Einzelne Positionen lassen sich
   nicht entfernen.
-- **Fehlerpfad in `addToCart` greift nicht.** Liefert die Suche keinen Treffer,
-  gibt `search()` eine leere Liste zurück; `getFirst()` wirft dann eine
-  `NoSuchElementException`, bevor die vorgesehene Meldung „Buch nicht gefunden"
-  gesetzt werden kann. Dieser Fall tritt auch auf, wenn der Catalog-Service
-  gerade nicht erreichbar ist.
+- **`addToCart` erwartet einen Treffer.** Die Methode arbeitet mit der ersten
+  Fundstelle der Suche und ist auf den Normalfall ausgelegt – eine gültige ISBN
+  bei erreichbarem Catalog-Service. Der leere Trefferfall, etwa bei
+  unbekannter ISBN oder während eines Catalog-Ausfalls, ist noch nicht
+  abgedeckt.
 - **Alle Actuator-Endpunkte offen** (`exposure.include=*`), ohne Absicherung.
 - **Keine Authentifizierung.** Die Oberfläche ist ohne Anmeldung nutzbar.
