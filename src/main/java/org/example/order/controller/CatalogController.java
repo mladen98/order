@@ -42,8 +42,10 @@ public class CatalogController {
     @PostMapping("/cart/add")
     public String addToCart(@RequestParam String isbn, RedirectAttributes redirect) {
         // 1) Das Buch über den Catalog suchen
-        var book = catalog.search(isbn).getFirst();
-        if (book != null) {
+        // Die Liste kann leer sein: unbekannte ISBN oder Catalog nicht erreichbar (Fallback)
+        var results = catalog.search(isbn);
+        if (!results.isEmpty()) {
+            var book = results.getFirst();
             cart.add(book); // 2) In Warenkorb legen
             redirect.addFlashAttribute("msg", "Buch hinzugefügt: " + book.title());
         }
