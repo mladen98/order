@@ -7,21 +7,6 @@ services:
       POSTGRES_USER: catalog
       POSTGRES_PASSWORD: catalog
       POSTGRES_DB: catalog
-      options: >-
-        --health-cmd="pg_isready -U catalog"
-        --health-interval=10s
-        --health-timeout=5s
-        --health-retries=5
-        
-        steps:
-          # Other steps ...
-          - name: Wait for PostgreSQL
-            run: |
-              for i in $(seq 1 30); do
-                nc -z localhost 5432 && echo "Postgres is UP" && exit 0
-                sleep 1
-              done
-              echo "Postgres did not start in time" && exit 1
     ports:
       - "5432:5432"
     networks:
